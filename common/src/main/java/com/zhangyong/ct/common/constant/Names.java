@@ -13,7 +13,22 @@ public enum Names implements Val {
     /**
      * 命名空间
      */
-    NAMESPACE("ct");
+    NAMESPACE("ct"),
+    /**
+     * 主题
+     */
+    TOPIC("ct"),
+    /**
+     * 表族
+     */
+    TABLE("ct:calllog"),
+    /**
+     * 列族
+     */
+    CF_CALLER("caller"),
+    CF_INFO("info");
+
+
 
     private String name;
 
@@ -22,10 +37,10 @@ public enum Names implements Val {
     }
 
     public void setValue(Object val) {
-        this.name= (String) val;
+        this.name = (String) val;
     }
 
-    public Object getValue() {
-        return null;
+    public String getValue() {
+        return name;
     }
 }
