@@ -42,8 +42,6 @@ public class CalllogConsumer implements Consumer {
             //初始化
             dao.init();
 
-
-
             //消费数据
             while(true){
                 ConsumerRecords<String, String> consumerRecords = consumer.poll(100);

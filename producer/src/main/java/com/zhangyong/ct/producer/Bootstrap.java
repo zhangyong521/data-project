@@ -1,6 +1,5 @@
 package com.zhangyong.ct.producer;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
 import com.zhangyong.ct.common.bean.Producer;
 import com.zhangyong.ct.producer.bean.LocalFileProducer;
 import com.zhangyong.ct.producer.io.LocalFileDataIn;

@@ -15,6 +15,7 @@ import java.io.IOException;
  * 将数据存储到HBase中去
  */
 public class Bootstrap {
+    public final static String ABC = "ABC";
     public static void main(String[] args) throws IOException {
         //创建消费者
         Consumer consumer = new CalllogConsumer();

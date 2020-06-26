@@ -13,11 +13,10 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Author: 张勇
@@ -112,24 +111,24 @@ public abstract class BaseDao {
         }
     }
 
-
-    /*private static byte[][] genSplitKeys(int regionCount) {
-        int splitKeyCount = regionCount - 1;
-        byte[][] bs = new byte[splitKeyCount][];
-        //0,1,2,3,4
-        List<byte[]> bsList = new ArrayList<byte[]>();
-        for (int i = 0; i < splitKeyCount; i++) {
-            String splitKey = i + "|";
-            System.out.println(splitKey);
-            bsList.add(Bytes.toBytes(splitKey));
-        }
-        bsList.toArray(bs);
-        return bs;
-    }*/
-
+    /**
+     * 增加数据
+     *
+     * @param name
+     * @param put
+     */
+    protected void putData(String name, Put put) throws IOException {
+        //获取表对象
+        Connection conn = getConnection();
+        Table table = conn.getTable(TableName.valueOf(name));
+        //增加数据
+        table.put(put);
+        //关闭表
+        table.close();
+    }
 
     /**
-     * 删除表
+     * 删除表格
      *
      * @param name
      * @throws IOException

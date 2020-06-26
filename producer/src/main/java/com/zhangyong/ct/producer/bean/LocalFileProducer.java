@@ -7,7 +7,6 @@ import com.zhangyong.ct.common.util.DateUtil;
 import com.zhangyong.ct.common.util.NumBeUtil;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;

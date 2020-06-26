@@ -3,8 +3,9 @@ package com.zhangyong.ct.consumer.dao;
 import com.zhangyong.ct.common.bean.BaseDao;
 import com.zhangyong.ct.common.constant.Names;
 import com.zhangyong.ct.common.constant.ValueConstant;
-import org.apache.hadoop.hbase.master.procedure.CreateNamespaceProcedure;
-import org.apache.hadoop.hbase.master.procedure.CreateTableProcedure;
+import com.zhangyong.ct.common.util.GenSplitKeyUtil;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * @Author: 张勇
@@ -29,13 +30,48 @@ public class HBaseDao extends BaseDao {
 
     }
 
-
     /**
      * 插入数据
      *
      * @param value
      */
-    public void insertData(String value) {
-        //将通话
+    public void insertData(String value) throws Exception {
+        //将通话日志保存到HBase表中
+        //1.获取通话日志的数据
+        String[] values = value.split("\t");
+        String call1 = values[0];
+        String call2 = values[1];
+        String callTime = values[2];
+        String duration = values[3];
+
+
+        // 2. 创建数据对象
+
+        // rowKey设计
+        // 1）长度原则
+        //      最大值64KB，推荐长度为10 ~ 100byte
+        //      最好8的倍数，能短则短，rowKey如果太长会影响性能
+        // 2）唯一原则：rowKey应该具备唯一性
+        // 3）散列原则
+        //      3-1）盐值散列：不能使用时间戳直接作为rowkey
+        //           在rowKey前增加随机数
+        //      3-2）字符串反转：1312312334342， 1312312334345
+        //           电话号码：133 + 0123 + 4567
+        //      3-3) 计算分区号：hashMap
+
+        // rowKey = regionNum + call1 + time + call2 + duration
+        String rowKey = GenSplitKeyUtil.genRegionNum(call1, callTime) + "_" + call1 + "_" + callTime + "_" + call2 + "_" + duration;
+        // 主叫用户
+        Put put = new Put(Bytes.toBytes(rowKey));
+
+        byte[] family = Bytes.toBytes(Names.CF_CALLER.getValue());
+
+        put.addColumn(family, Bytes.toBytes("call1"), Bytes.toBytes(call1));
+        put.addColumn(family, Bytes.toBytes("call2"), Bytes.toBytes(call2));
+        put.addColumn(family, Bytes.toBytes("callTime"), Bytes.toBytes(callTime));
+        put.addColumn(family, Bytes.toBytes("duration"), Bytes.toBytes(duration));
+
+        //3.保存数据
+        putData(Names.TABLE.getValue(), put);
     }
 }
