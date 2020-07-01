@@ -3,7 +3,7 @@ package com.zhangyong.ct.consumer.dao;
 import com.zhangyong.ct.common.bean.BaseDao;
 import com.zhangyong.ct.common.constant.Names;
 import com.zhangyong.ct.common.constant.ValueConstant;
-import com.zhangyong.ct.common.util.GenSplitKeyUtil;
+import com.zhangyong.ct.consumer.bean.Calllog;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -29,6 +29,18 @@ public class HBaseDao extends BaseDao {
         end();
 
     }
+
+    /**
+     * 插入对象
+     *
+     * @param log
+     * @throws Exception
+     */
+    public void insertData(Calllog log) throws Exception {
+        log.setRowkey(genRegionNum(log.getCall1(), log.getCalltime()) + "_" + log.getCall1() + "_" + log.getCalltime() + "_" + log.getCall2() + "_" + log.getDuration());
+        putData(log);
+    }
+
 
     /**
      * 插入数据
@@ -60,7 +72,7 @@ public class HBaseDao extends BaseDao {
         //      3-3) 计算分区号：hashMap
 
         // rowKey = regionNum + call1 + time + call2 + duration
-        String rowKey = GenSplitKeyUtil.genRegionNum(call1, callTime) + "_" + call1 + "_" + callTime + "_" + call2 + "_" + duration;
+        String rowKey = genRegionNum(call1, callTime) + "_" + call1 + "_" + callTime + "_" + call2 + "_" + duration;
         // 主叫用户
         Put put = new Put(Bytes.toBytes(rowKey));
 
@@ -73,5 +85,6 @@ public class HBaseDao extends BaseDao {
 
         //3.保存数据
         putData(Names.TABLE.getValue(), put);
+
     }
 }

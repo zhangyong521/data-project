@@ -1,8 +1,11 @@
 package com.zhangyong.ct.common.bean;
 
 
+import com.zhangyong.ct.common.api.Column;
+import com.zhangyong.ct.common.api.Rowkey;
+import com.zhangyong.ct.common.api.TableRef;
 import com.zhangyong.ct.common.constant.Names;
-import com.zhangyong.ct.common.util.GenSplitKeyUtil;
+import com.zhangyong.ct.common.constant.ValueConstant;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -15,8 +18,13 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author: 张勇
@@ -106,9 +114,107 @@ public abstract class BaseDao {
             admin.createTable(tableDescriptor);
         } else {
             //分区键
-            byte[][] splitKeys = GenSplitKeyUtil.genSplitKeys(regionCount);
+            byte[][] splitKeys = genSplitKeys(regionCount);
             admin.createTable(tableDescriptor, splitKeys);
         }
+    }
+
+
+    /**
+     * 生成分区键
+     *
+     * @param regionCount
+     * @return
+     */
+    public byte[][] genSplitKeys(int regionCount) {
+        int splitKeyCount = regionCount - 1;
+        byte[][] bs = new byte[splitKeyCount][];
+        //0,1,2,3,4
+        List<byte[]> bsList = new ArrayList<byte[]>();
+        for (int i = 0; i < splitKeyCount; i++) {
+            String splitKey = i + "|";
+            System.out.println(splitKey);
+            bsList.add(Bytes.toBytes(splitKey));
+        }
+        bsList.toArray(bs);
+        return bs;
+    }
+
+    /**
+     * 计算分区号
+     *
+     * @param tel
+     * @param date
+     * @return
+     */
+    public int genRegionNum(String tel, String date) {
+
+        // 13301234567
+        String userCode = tel.substring(tel.length() - 4);
+        // 20201010120000
+        String yearMonth = date.substring(0, 6);
+
+        int userCodeHash = userCode.hashCode();
+        int yearMonthHash = yearMonth.hashCode();
+
+        // crc校验采用异或算法， hash
+        int crc = Math.abs(userCodeHash ^ yearMonthHash);
+
+        // 取模
+        int regionNum = crc % ValueConstant.REGION_COUNT;
+
+        return regionNum;
+
+    }
+
+    /**
+     * 增加对象：自动封装数据，将对象数据直接保存到HBase中
+     *
+     * @param obj
+     * @throws Exception
+     */
+    protected void putData(Object obj) throws Exception {
+        //反射
+        Class clazz = obj.getClass();
+        TableRef tableRef = (TableRef) clazz.getAnnotation(TableRef.class);
+        String tableName = tableRef.value();
+
+        Field[] fs = clazz.getDeclaredFields();
+        String stringRowkey = "";
+        for (Field f : fs) {
+            Rowkey rowkey = f.getAnnotation(Rowkey.class);
+            if (rowkey != null) {
+                f.setAccessible(true);
+                stringRowkey = (String) f.get(obj);
+                break;
+            }
+        }
+
+        Connection conn = getConnection();
+        Table table = conn.getTable(TableName.valueOf(tableName));
+        Put put = new Put(Bytes.toBytes(stringRowkey));
+
+        for (Field f : fs) {
+            Column column = f.getAnnotation(Column.class);
+            if (column != null) {
+                String family = column.family();
+                String colName = column.column();
+                if (colName == null || "".equals(colName)) {
+                    colName = f.getName();
+                }
+                f.setAccessible(true);
+                String value = (String) f.get(obj);
+
+                put.addColumn(Bytes.toBytes(family), Bytes.toBytes(colName), Bytes.toBytes(value));
+            }
+
+        }
+
+        //增加数据
+        table.put(put);
+        //关闭表
+        table.close();
+
     }
 
     /**
