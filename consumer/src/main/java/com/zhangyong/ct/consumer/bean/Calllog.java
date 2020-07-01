@@ -23,6 +23,8 @@ public class Calllog {
     private String calltime;
     @Column(family = "caller")
     private String duration;
+    @Column(family = "caller")
+    private String flg = "1";
 
     private String name;
 
@@ -78,6 +80,7 @@ public class Calllog {
     public void setDuration(String duration) {
         this.duration = duration;
     }
+
     public String getRowkey() {
         return rowkey;
     }
@@ -85,5 +88,14 @@ public class Calllog {
     public void setRowkey(String rowkey) {
         this.rowkey = rowkey;
     }
+
+    public String getFlg() {
+        return flg;
+    }
+
+    public void setFlg(String flg) {
+        this.flg = flg;
+    }
+
 
 }

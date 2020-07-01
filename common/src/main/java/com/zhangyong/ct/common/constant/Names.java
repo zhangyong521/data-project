@@ -23,12 +23,14 @@ public enum Names implements Val {
      */
     TABLE("ct:calllog"),
     /**
-     * 列族
+     * 列族(主叫)
      */
     CF_CALLER("caller"),
+    /**
+     * 列族(被叫)
+     */
+    CF_CALLEE("callee"),
     CF_INFO("info");
-
-
 
     private String name;
 

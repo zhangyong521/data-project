@@ -21,9 +21,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import javax.swing.plaf.synth.Region;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -244,6 +242,22 @@ public abstract class BaseDao {
         }
         //增加数据
         table.put(put);
+        //关闭表
+        table.close();
+    }
+
+    /**
+     * 增加多条数据
+     *
+     * @param name
+     * @param puts
+     */
+    protected void putData(String name, List<Put> puts) throws IOException {
+        //获取表对象
+        Connection conn = getConnection();
+        Table table = conn.getTable(TableName.valueOf(name));
+        //增加数据
+        table.put(puts);
         //关闭表
         table.close();
     }
