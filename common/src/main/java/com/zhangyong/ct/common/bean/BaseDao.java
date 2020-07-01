@@ -6,6 +6,7 @@ import com.zhangyong.ct.common.api.Rowkey;
 import com.zhangyong.ct.common.api.TableRef;
 import com.zhangyong.ct.common.constant.Names;
 import com.zhangyong.ct.common.constant.ValueConstant;
+import com.zhangyong.ct.common.util.DateUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -20,10 +21,12 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import javax.swing.plaf.synth.Region;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -98,7 +101,6 @@ public abstract class BaseDao {
     private void createTable(String name, Integer regionCount, String... families) throws IOException {
         Admin admin = getAdmin();
         TableName tableName = TableName.valueOf(name);
-
         HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
         if (families == null || families.length == 0) {
             families = new String[1];
@@ -108,7 +110,6 @@ public abstract class BaseDao {
             HColumnDescriptor columnDescriptor = new HColumnDescriptor(family);
             tableDescriptor.addFamily(columnDescriptor);
         }
-
         //增加预分区
         if (regionCount == null || regionCount <= 1) {
             admin.createTable(tableDescriptor);
@@ -118,7 +119,6 @@ public abstract class BaseDao {
             admin.createTable(tableDescriptor, splitKeys);
         }
     }
-
 
     /**
      * 生成分区键
@@ -140,6 +140,47 @@ public abstract class BaseDao {
         return bs;
     }
 
+
+    /**
+     * 获取查询时的startrow，stoprow集合
+     *
+     * @param tel
+     * @param start
+     * @param end
+     * @return
+     */
+    protected List<String[]> getStartStorRowkeys(String tel, String start, String end) {
+        List<String[]> rowkeyss = new ArrayList<String[]>();
+
+        String startTime = start.substring(0, 6);
+        String endTime = end.substring(0, 6);
+
+        //转化为日历
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(DateUtil.parse(startTime, "yyyyMM"));
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(DateUtil.parse(endTime, "yyyyMM"));
+
+        while (startCal.getTimeInMillis() <= endCal.getTimeInMillis()) {
+            //当前时间
+            String nowTime = DateUtil.format(startCal.getTime(), "yyyyMM");
+
+            int regionNum = genRegionNum(tel, nowTime);
+
+            //1_133_202003 ~ 1_133_202003|
+            String startRow = regionNum + "_" + tel + "_" + nowTime;
+            String stopRow = startRow + "|";
+
+            String[] rowkeys = {startRow, stopRow};
+            rowkeyss.add(rowkeys);
+
+            //月份+1
+            startCal.add(Calendar.MONTH, 1);
+        }
+
+        return rowkeyss;
+    }
+
     /**
      * 计算分区号
      *
@@ -148,21 +189,16 @@ public abstract class BaseDao {
      * @return
      */
     public int genRegionNum(String tel, String date) {
-
         // 13301234567
         String userCode = tel.substring(tel.length() - 4);
         // 20201010120000
         String yearMonth = date.substring(0, 6);
-
         int userCodeHash = userCode.hashCode();
         int yearMonthHash = yearMonth.hashCode();
-
         // crc校验采用异或算法， hash
         int crc = Math.abs(userCodeHash ^ yearMonthHash);
-
         // 取模
         int regionNum = crc % ValueConstant.REGION_COUNT;
-
         return regionNum;
 
     }
@@ -178,7 +214,6 @@ public abstract class BaseDao {
         Class clazz = obj.getClass();
         TableRef tableRef = (TableRef) clazz.getAnnotation(TableRef.class);
         String tableName = tableRef.value();
-
         Field[] fs = clazz.getDeclaredFields();
         String stringRowkey = "";
         for (Field f : fs) {
@@ -189,11 +224,9 @@ public abstract class BaseDao {
                 break;
             }
         }
-
         Connection conn = getConnection();
         Table table = conn.getTable(TableName.valueOf(tableName));
         Put put = new Put(Bytes.toBytes(stringRowkey));
-
         for (Field f : fs) {
             Column column = f.getAnnotation(Column.class);
             if (column != null) {
@@ -209,12 +242,10 @@ public abstract class BaseDao {
             }
 
         }
-
         //增加数据
         table.put(put);
         //关闭表
         table.close();
-
     }
 
     /**
@@ -246,7 +277,6 @@ public abstract class BaseDao {
         admin.deleteTable(tableName);
     }
 
-
     /**
      * 获取连接
      * 没有创建新的，
@@ -277,6 +307,5 @@ public abstract class BaseDao {
         }
         return admin;
     }
-
 
 }

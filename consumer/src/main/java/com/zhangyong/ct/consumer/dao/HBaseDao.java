@@ -19,7 +19,6 @@ public class HBaseDao extends BaseDao {
      * 初始化
      */
     public void init() throws Exception {
-
         start();
 
         //NX:表示没有创建
@@ -27,7 +26,6 @@ public class HBaseDao extends BaseDao {
         createTableXX(Names.TABLE.getValue(), ValueConstant.REGION_COUNT, Names.CF_CALLER.getValue());
 
         end();
-
     }
 
     /**
@@ -40,7 +38,6 @@ public class HBaseDao extends BaseDao {
         log.setRowkey(genRegionNum(log.getCall1(), log.getCalltime()) + "_" + log.getCall1() + "_" + log.getCalltime() + "_" + log.getCall2() + "_" + log.getDuration());
         putData(log);
     }
-
 
     /**
      * 插入数据
@@ -56,9 +53,7 @@ public class HBaseDao extends BaseDao {
         String callTime = values[2];
         String duration = values[3];
 
-
         // 2. 创建数据对象
-
         // rowKey设计
         // 1）长度原则
         //      最大值64KB，推荐长度为10 ~ 100byte
