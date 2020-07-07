@@ -26,7 +26,7 @@ public class HBaseDao extends BaseDao {
 
         //NX:表示没有创建
         createNamespaceNX(Names.NAMESPACE.getValue());
-        createTableXX(Names.TABLE.getValue(), ValueConstant.REGION_COUNT, Names.CF_CALLER.getValue(), Names.CF_CALLEE.getValue());
+        createTableXX(Names.TABLE.getValue(), "com.zhangyong.ct.coprocessor.InsertCalleeCoprocessor" ,ValueConstant.REGION_COUNT, Names.CF_CALLER.getValue(), Names.CF_CALLEE.getValue());
 
         end();
     }
@@ -85,6 +85,7 @@ public class HBaseDao extends BaseDao {
 
         String calleeRowKey = genRegionNum(call2, callTime) + "_" + call2 + "_" + callTime + "_" + call1 + "_" + duration + "_0";
         // 被叫用户
+        /*
         Put calleePut = new Put(Bytes.toBytes(calleeRowKey));
         byte[] calleeFamily = Bytes.toBytes(Names.CF_CALLEE.getValue());
         calleePut.addColumn(calleeFamily, Bytes.toBytes("call1"), Bytes.toBytes(call2));
@@ -92,11 +93,12 @@ public class HBaseDao extends BaseDao {
         calleePut.addColumn(calleeFamily, Bytes.toBytes("callTime"), Bytes.toBytes(callTime));
         calleePut.addColumn(calleeFamily, Bytes.toBytes("duration"), Bytes.toBytes(duration));
         calleePut.addColumn(calleeFamily, Bytes.toBytes("flg"), Bytes.toBytes("0"));
+        */
 
         //3.保存数据
         List<Put> puts = new ArrayList<Put>();
         puts.add(put);
-        puts.add(calleePut);
+        //puts.add(calleePut);
 
         putData(Names.TABLE.getValue(), puts);
 

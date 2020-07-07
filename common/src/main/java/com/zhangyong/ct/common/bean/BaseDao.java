@@ -82,10 +82,10 @@ public abstract class BaseDao {
      * 创建表，如果表存在创建新的，没有就创建
      */
     protected void createTableXX(String name, String... families) throws IOException {
-        createTableXX(name, null, families);
+        createTableXX(name, null, null, families);
     }
 
-    protected void createTableXX(String name, Integer regionCount, String... families) throws IOException {
+    protected void createTableXX(String name, String coprocessorClass, Integer regionCount, String... families) throws IOException {
         Admin admin = getAdmin();
         TableName tableName = TableName.valueOf(name);
         if (admin.tableExists(tableName)) {
@@ -93,10 +93,10 @@ public abstract class BaseDao {
             deleteTable(name);
         }
         //创建表
-        createTable(name, regionCount, families);
+        createTable(name, coprocessorClass, regionCount, families);
     }
 
-    private void createTable(String name, Integer regionCount, String... families) throws IOException {
+    private void createTable(String name, String coprocessorClass, Integer regionCount, String... families) throws IOException {
         Admin admin = getAdmin();
         TableName tableName = TableName.valueOf(name);
         HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
@@ -107,6 +107,9 @@ public abstract class BaseDao {
         for (String family : families) {
             HColumnDescriptor columnDescriptor = new HColumnDescriptor(family);
             tableDescriptor.addFamily(columnDescriptor);
+        }
+        if (coprocessorClass != null && !"".equals(coprocessorClass)) {
+            tableDescriptor.addCoprocessor(coprocessorClass);
         }
         //增加预分区
         if (regionCount == null || regionCount <= 1) {
