@@ -1,0 +1,1 @@
+<jsp:forward page="/query"></jsp:forward>
